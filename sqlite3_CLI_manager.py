@@ -32,7 +32,6 @@ from completer import DynamicCompleter
 
 # autocomplete_options = ['table', 'test', 'list', 'next', 'update', 'insert', 'delete', 'help', 'exit']
 
-
 def main(database:str):
     connection = sqlite3.connect(database)
     cur = connection.cursor()
@@ -49,9 +48,9 @@ def main(database:str):
     while True:
         try:
             text = session.prompt('> ')
-            
-            if text == 'test':
-                autocomplete_options.append('newoption')
+
+            if text == 'add':
+                completer.add(key='table', value='new value')
 
             if text == 'help':
                 print_help()
