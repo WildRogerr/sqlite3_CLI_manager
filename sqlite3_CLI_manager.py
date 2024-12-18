@@ -1,7 +1,7 @@
 import sqlite3
 import sys
-from prompt_toolkit import PromptSession, prompt
-from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit import PromptSession
+from completer import DynamicCompleter
 
 #> table [tableslist]
 #> list [optional_page]
@@ -27,47 +27,62 @@ from prompt_toolkit.completion import WordCompleter
 #> update "column_name" "primary_key"
 #> insert "optional_id"
 #> delete "primary_key"
+#> help
 #> exit
 
-sql_completer = WordCompleter(['tables'], ignore_case=True)
+# autocomplete_options = ['table', 'test', 'list', 'next', 'update', 'insert', 'delete', 'help', 'exit']
+
 
 def main(database:str):
     connection = sqlite3.connect(database)
-    session = PromptSession(completer=sql_completer)
     cur = connection.cursor()
     cur.execute(f'SELECT name FROM sqlite_master')
-    table = cur.fetchall()
-    print(table)
-    
+    tables = cur.fetchall()
+    autocomplete_options = {}
+    autocomplete_options["table"] = set()
+    for table_tuple in tables:
+        autocomplete_options["table"].add(table_tuple[0])
+    # completer = NestedCompleter.from_nested_dict(autocomplete_options)
+    completer = DynamicCompleter.from_dict(autocomplete_options)
+    session = PromptSession(completer=completer)
+
     while True:
         try:
             text = session.prompt('> ')
+            
+            if text == 'test':
+                autocomplete_options.append('newoption')
+
+            if text == 'help':
+                print_help()
+
+            if text == 'exit':
+                break
+
         except KeyboardInterrupt:
             continue  # Control-C pressed. Try again.
         except EOFError:
             break  # Control-D pressed.
 
+def print_help():
+    print('table [tablename]')
+    print('    Connect to a table')
+    print('list [optional page]')
+    print('    List all paginated rows in database. Optionally provide a page number.')
+    print('next')
+    print('    Show next page of rows. Used only after list.')
+    print('update [column name] [primary key]')
+    print('    Update a single value in a row. Primary key must exist.')
+    print('insert [optional id]')
+    print('    Insert new row to the table. Optionally provide an id for new row.')
+    print('    If table contains NOT NULL columns, wizard will ask you to fill each of them one by one.')
+    print('delete [primary key]')
+    print('    Delete the row. Primary key must exist')
+    print('help')
+    print('    Show this help.')
+    print('exit')
+    print('    Terminate the CLI program.')
 
 if __name__ == '__main__':
     db = sys.argv[1]
     main(db)
-
-
-
-# class Database():
-    
-#     def __init__(self):
-#         self.conn = sqlite3.connect(self.database_path)
-#         self.database_path = input('Enter path to database file: ')
-#         self.database_table = input('Enter table name: ')
-#         show_table = show_table()
-#         print(show_table())
-
-#     def show_table(self):
-#         cur = self.conn.cursor()
-#         cur.execute(f'SELECT * FROM database_table = ?',(self.database_table))
-#         table = cur.fetchall()
-#         return table
-    
-#     def __del__(self):
-#         self.conn.close()
