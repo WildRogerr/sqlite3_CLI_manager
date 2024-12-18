@@ -37,8 +37,7 @@ def main(database:str):
     cur = connection.cursor()
     cur.execute(f'SELECT name FROM sqlite_master')
     tables = cur.fetchall()
-    autocomplete_options = {}
-    autocomplete_options["table"] = set()
+    autocomplete_options = {'table': set(), 'help': None}
     for table_tuple in tables:
         autocomplete_options["table"].add(table_tuple[0])
     # completer = NestedCompleter.from_nested_dict(autocomplete_options)
@@ -51,6 +50,9 @@ def main(database:str):
 
             if text == 'add':
                 completer.add(key='table', value='new value')
+
+            if text == 'clear':
+                completer.clear(key='table')
 
             if text == 'help':
                 print_help()
