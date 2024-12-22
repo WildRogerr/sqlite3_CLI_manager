@@ -55,7 +55,9 @@ class CommandDispatcher:
         print("Input new value:")
 
     def list_handler(self, args: List[str]):
-        pass # TODO
+        rows = self.db.list_rows()
+        formatted_rows = format_db_rows(rows)
+        print(formatted_rows)
 
     def value_handler(self, value: str):
         if self.state.name == CommandType.UPDATE:
