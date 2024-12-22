@@ -1,8 +1,11 @@
 import sqlite3
 import sys
+from sqlite3 import Connection
 from prompt_toolkit import PromptSession
 from clistate import CliState, CliStateName
+from command import Command, CommandType
 from completer import DynamicCompleter
+from db import get_table_names
 
 #> table [tableslist]
 #> list [optional_page]
@@ -40,7 +43,6 @@ COMPLETIONS = {
     CliStateName.TABLE: ['table', 'list', 'next', 'update', 'insert', 'delete', 'help', 'exit'],
     CliStateName.UPDATE: [],
     CliStateName.INSERT: [],
-    CliStateName.EXIT: [],
 }
 
 def main(database:str):
@@ -53,64 +55,48 @@ def main(database:str):
     }
     completer = DynamicCompleter.from_dict(autocomplete_options)
     session = PromptSession(completer=completer)
-    state = CliState()
+    state = CliState(tables)
     
     while True:
         try:
-            text: str = session.prompt('> ')
-            handle_prompt(text,connection,completer,state)
-
-            if state.name == CliStateName.EXIT:
+            prompt: str = session.prompt('> ')
+            command = Command.from_prompt(prompt)
+            if command.command_type == CommandType.EXIT:
                 break
+            handle_command(command, connection, completer, state)
         except KeyboardInterrupt:
             continue  # Control-C pressed. Try again.
         except EOFError:
             break  # Control-D pressed.
 
-def get_table_names(connection):
-    cur = connection.cursor()
-    cur.execute(f'SELECT name FROM sqlite_master')
-    tables = cur.fetchall()
-    return [table[0] for table in tables]
-
-def handle_prompt(prompt:str,connection: sqlite3.Connection,completer:DynamicCompleter,state:CliState):
-    if prompt.startswith('table '):
-        table_name = prompt[6:]
+def handle_command(command: Command, connection: Connection, completer: DynamicCompleter, state: CliState):
+    if command.command_type == CommandType.TABLE:
+        table_name = command.arguments[0]
         cur = connection.cursor()
         cur.execute(f'PRAGMA table_info({table_name})')
         columns = [row[1] for row in cur.fetchall()]
-        print(columns)
-        # completer.update(key='update', values=columns)
-        # completer.add(key='')
-        state.update(CliStateName.TABLE, table_name)
+        state.to_table(table_name, columns)
         completions = {
+            'table': set(state.tables),
             'list': None,
             'next': None,
-            'update': set(columns),
+            'update': set(state.columns),
             'insert': None,
             'delete': None,
+            'help': None,
+            'exit': None,
         }
         completer.update(completions)
-        # 'list': None, 
-        # 'next': None,
-        # 'insert': None,
-        # 'update': set(),
-        # 'delete': None,
-
-    if prompt == 'update':
-        completer.add(key='table', value='new value')
-    
-    if prompt == 'add':
-        completer.add(key='table', value='new value')
-
-    if prompt == 'clear':
-        completer.clear(key='table')
-
-    if prompt == 'help':
+    elif command.command_type == CommandType.UPDATE:
+        state.to_update(command.arguments[0], int(command.arguments[1]))
+        completer.update({})
+        print('Input new value:')
+    elif command.command_type == CommandType.LIST:
+        pass
+    elif command.command_type == CommandType.HELP:
         print_help()
-
-    if prompt == 'exit':
-        state.name = CliStateName.EXIT
+    elif command.command_type == CommandType.EXIT:
+        return
 
 def print_help():
     print('table [tablename]')
