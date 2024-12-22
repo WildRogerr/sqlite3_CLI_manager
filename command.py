@@ -2,6 +2,10 @@ from enum import Enum
 from typing import List
 
 
+class InvalidCommand(Exception):
+    pass
+
+
 class CommandType(Enum):
     def __init__(self, alias):
         self.alias = alias
@@ -34,4 +38,4 @@ class Command:
             if command_type.alias == alias:
                 return cls(command_type, arguments)
 
-        raise Exception(f'Invalid command {alias}')
+        raise InvalidCommand(f'Invalid command {alias}')
