@@ -5,6 +5,7 @@ from clistate import CliState
 from command import Command, CommandType
 from completer import DynamicCompleter
 from db import DB
+from format import format_db_rows
 
 
 class CommandDispatcher:
@@ -55,8 +56,8 @@ class CommandDispatcher:
         print("Input new value:")
 
     def list_handler(self, args: List[str]):
-        rows = self.db.list_rows()
-        formatted_rows = format_db_rows(rows)
+        rows = self.db.list_rows(self.state.table)
+        formatted_rows = format_db_rows(self.state.columns,rows)
         print(formatted_rows)
 
     def value_handler(self, value: str):

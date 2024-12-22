@@ -1,5 +1,6 @@
 import sqlite3
 from sqlite3 import Connection
+from typing import List, Tuple
 
 class DB:
     connection: Connection
@@ -21,3 +22,10 @@ class DB:
     def update_table(self, table_name: str, column: str, row_id: int, value: str):
         cur = self.connection.cursor()
         cur.execute(f'UPDATE {table_name} SET {column} = ? WHERE id = ?', (value, row_id))
+
+    # to do: page number as argument, limit ofset, stor page_number in sates
+    def list_rows(self,table_name:str) -> List[Tuple]:
+        cur = self.connection.cursor()
+        cur.execute(f'SELECT * FROM {table_name}')
+        rows = cur.fetchall()
+        return rows
