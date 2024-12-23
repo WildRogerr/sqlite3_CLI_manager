@@ -21,3 +21,4 @@ class DB:
     def update_table(self, table_name: str, column: str, row_id: int, value: str):
         cur = self.connection.cursor()
         cur.execute(f'UPDATE {table_name} SET {column} = ? WHERE id = ?', (value, row_id))
+        self.connection.commit()

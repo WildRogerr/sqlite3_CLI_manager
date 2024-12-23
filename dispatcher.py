@@ -1,7 +1,7 @@
 import sys
 from typing import List, Callable, Dict
 
-from clistate import CliState
+from clistate import CliState, CliStateName
 from command import Command, CommandType
 from completer import DynamicCompleter
 from db import DB
@@ -55,17 +55,19 @@ class CommandDispatcher:
         print("Input new value:")
 
     def list_handler(self, args: List[str]):
-        rows = self.db.list_rows()
-        formatted_rows = format_db_rows(rows)
-        print(formatted_rows)
+        # rows = self.db.list_rows()
+        # formatted_rows = format_db_rows(rows)
+        # print(formatted_rows)
+        pass
 
     def value_handler(self, value: str):
-        if self.state.name == CommandType.UPDATE:
+        if self.state.name == CliStateName.UPDATE:
             self.db.update_table(self.state.table, self.state.column, self.state.row_id, value)
-            self.table_handler([self.state.table])
             print("Row updated")
-        elif self.state.name == CommandType.INSERT:
+        elif self.state.name == CliStateName.INSERT:
             pass # TODO
+
+        self.table_handler([self.state.table])
 
     def help_handler(self, _: List[str]):
         print('table [tablename]')
@@ -90,7 +92,7 @@ class CommandDispatcher:
         sys.exit(0)
 
     def execute(self, prompt: str):
-        if self.state.name == CommandType.UPDATE:
+        if self.state.name == CliStateName.UPDATE:
             self.value_handler(prompt)
         else:
             command = Command.from_prompt(prompt)
