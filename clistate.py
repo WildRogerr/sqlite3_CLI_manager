@@ -19,6 +19,7 @@ class CliState:
     column: str
     columns: List[str]
     row_id: int
+    page_number: int
 
     def __init__(self, tables: List[str]):
         self.tables = tables

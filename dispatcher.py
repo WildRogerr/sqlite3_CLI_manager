@@ -4,7 +4,7 @@ from typing import List, Callable, Dict
 from clistate import CliState, CliStateName
 from command import Command, CommandType
 from completer import DynamicCompleter
-from db import DB
+from db import DB, PAGE_SIZE
 from format import format_db_rows
 
 
@@ -28,25 +28,30 @@ class CommandDispatcher:
             CommandType.TABLE.alias: self.table_handler,
             CommandType.UPDATE.alias: self.update_handler,
             CommandType.LIST.alias: self.list_handler,
+            CommandType.NEXT.alias: self.next_handler,
             CommandType.HELP.alias: self.help_handler,
             CommandType.EXIT.alias: self.exit_handler,
         }
 
     def table_handler(self, args: List[str]):
-        table_name = args[0]
-        columns = self.db.get_column_names(table_name)
-        self.state.to_table(table_name, columns)
-        completions = {
-            'table': set(self.state.tables),
-            'list': None,
-            'next': None,
-            'update': set(self.state.columns),
-            'insert': None,
-            'delete': None,
-            'help': None,
-            'exit': None,
-        }
-        self.completer.update(completions)
+        try: 
+            table_name = args[0]
+            columns = self.db.get_column_names(table_name)
+            self.state.to_table(table_name, columns)
+            completions = {
+                'table': set(self.state.tables),
+                'list': None,
+                'next': None,
+                'update': set(self.state.columns),
+                'insert': None,
+                'delete': None,
+                'help': None,
+                'exit': None,
+            }
+            self.completer.update(completions)
+            print(f'Table {table_name} choosed.')
+        except:
+            print('Enter Table Name!')
 
     def update_handler(self, args: List[str]):
         column = args[0]
@@ -54,11 +59,27 @@ class CommandDispatcher:
         self.state.to_update(column, row_id)
         self.completer.update({})
         print("Input new value:")
-
+    
     def list_handler(self, args: List[str]):
-        rows = self.db.list_rows(self.state.table)
-        formatted_rows = format_db_rows(self.state.columns,rows)
-        print(formatted_rows)
+        try:
+            if len(args) == 0:
+                self.state.page_number = 1
+            else:
+                self.state.page_number = int(args[0])
+            rows = self.db.list_rows(self.state.table, self.state.page_number)
+            table_size = self.db.get_table_size(self.state.table)
+            formatted_rows = format_db_rows(self.state.columns,rows,self.state.page_number,table_size)
+            print(formatted_rows)
+        except:
+            print('Enter Table Name!')
+
+    def next_handler(self, args: List[str]):
+        next_page = self.state.page_number + 1
+        table_size = self.db.get_table_size(self.state.table)
+        if next_page*PAGE_SIZE <= table_size:
+            self.list_handler([next_page])
+        else:
+            print('End table.')
 
     def value_handler(self, value: str):
         if self.state.name == CliStateName.UPDATE:
