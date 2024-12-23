@@ -18,11 +18,5 @@ class DynamicCompleter(Completer):
     def get_completions(self, document: Document, complete_event: CompleteEvent) -> Iterable[Completion]:
         return self.completer.get_completions(document, complete_event)
 
-    def add(self, key: str, value: str) -> None:
-        self.completer.options[key].options[value] = None
-
-    def clear(self, key: str) -> None:
-        self.completer.options[key] = None
-
     def update(self, completions: Completions) -> None:
         self.completer = NestedCompleter.from_nested_dict(completions)
