@@ -37,7 +37,7 @@ from dispatcher import CommandDispatcher
 def main(database: str):
     dispatcher = CommandDispatcher(database)
     session = PromptSession(completer=dispatcher.completer)
-
+    # todo handle all custom exception
     while True:
         try:
             prompt: str = session.prompt('> ')

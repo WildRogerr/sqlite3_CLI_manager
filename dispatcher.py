@@ -34,6 +34,8 @@ class CommandDispatcher:
         }
 
     def table_handler(self, args: List[str]):
+        # todo remove try/except
+        # todo handle invalid command in different states
         try: 
             table_name = args[0]
             columns = self.db.get_column_names(table_name)
@@ -61,6 +63,7 @@ class CommandDispatcher:
         print("Input new value:")
     
     def list_handler(self, args: List[str]):
+        # todo create custom exception and remove try/except
         try:
             if len(args) == 0:
                 self.state.page_number = 1
@@ -111,7 +114,7 @@ class CommandDispatcher:
 
     def exit_handler(self, _: List[str]):
         sys.exit(0)
-
+    # todo validate arguments lengths before calling handlers
     def execute(self, prompt: str):
         if self.state.name == CliStateName.UPDATE:
             self.value_handler(prompt)
