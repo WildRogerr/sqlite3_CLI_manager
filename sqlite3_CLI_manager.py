@@ -3,7 +3,7 @@ import sys
 from sqlite3 import Connection
 from prompt_toolkit import PromptSession
 from clistate import CliState, CliStateName
-from command import Command, CommandType, InvalidCommand
+from command import Command, CommandType, InvalidCommand, InvalidArguments
 from completer import DynamicCompleter
 from dispatcher import CommandDispatcher
 
@@ -46,8 +46,8 @@ def main(database: str):
             continue  # Control-C pressed. Try again.
         except EOFError:
             break  # Control-D pressed.
-        except InvalidCommand:
-            print('Invalid command')
+        except (InvalidCommand, InvalidArguments) as error:
+            print(error)
 
 if __name__ == '__main__':
     db = sys.argv[1]

@@ -37,3 +37,23 @@ class DB:
         cur.execute(f'SELECT COUNT(*) FROM {table_name}')
         row_count = int(cur.fetchone()[0])
         return row_count
+    
+    def get_primary_key(self, table_name:str) -> list:
+        cur = self.connection.cursor()
+        cur.execute(f"PRAGMA table_info('{table_name}')")
+        columns_info = cur.fetchall()
+        primary_key_info = [col for col in columns_info if col[5] > 0]
+        for pk in primary_key_info:
+            return [pk[1],pk[2]] # pk[1] - column, pk[2] - type data.
+    
+    # todo exception return
+    def insert_row(self, table_name:str, primary_key_column:str, primary_key) -> str:
+        cur = self.connection.cursor()
+        if primary_key and primary_key_column:
+            try:
+                cur.execute(f'INSERT INTO {table_name} ({primary_key_column}) VALUES ({primary_key})')
+            except sqlite3 as Exception:
+                return Exception
+        else:
+            cur.execute(f'INSERT INTO {table_name}')
+        self.connection.commit()

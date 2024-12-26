@@ -6,6 +6,7 @@ from command import Command, CommandType
 from completer import DynamicCompleter
 from db import DB, PAGE_SIZE
 from format import format_db_rows
+from validator import print_error, validate_command
 
 
 class CommandDispatcher:
@@ -29,31 +30,30 @@ class CommandDispatcher:
             CommandType.UPDATE.alias: self.update_handler,
             CommandType.LIST.alias: self.list_handler,
             CommandType.NEXT.alias: self.next_handler,
+            CommandType.INSERT.alias: self.insert_handler,
             CommandType.HELP.alias: self.help_handler,
             CommandType.EXIT.alias: self.exit_handler,
         }
 
     def table_handler(self, args: List[str]):
-        # todo remove try/except
-        # todo handle invalid command in different states
-        try: 
-            table_name = args[0]
-            columns = self.db.get_column_names(table_name)
-            self.state.to_table(table_name, columns)
-            completions = {
-                'table': set(self.state.tables),
-                'list': None,
-                'next': None,
-                'update': set(self.state.columns),
-                'insert': None,
-                'delete': None,
-                'help': None,
-                'exit': None,
-            }
-            self.completer.update(completions)
-            print(f'Table {table_name} choosed.')
-        except:
-            print('Enter Table Name!')
+        table_name = args[0]
+        columns = self.db.get_column_names(table_name)
+        self.state.to_table(table_name, columns)
+        completions = {
+            'table': set(self.state.tables),
+            'list': None,
+            'next': None,
+            'update': set(self.state.columns),
+            'insert': None,
+            'delete': None,
+            'help': None,
+            'exit': None,
+        }
+        self.completer.update(completions)
+        primary_key_column = self.db.get_primary_key(self.state.table)[0]
+        primary_key_type = self.db.get_primary_key(self.state.table)[1]
+        print(f'Table {table_name} choosed.')
+        print(f"Primary key column: {primary_key_column}, Data type: {primary_key_type}")
 
     def update_handler(self, args: List[str]):
         column = args[0]
@@ -63,19 +63,18 @@ class CommandDispatcher:
         print("Input new value:")
     
     def list_handler(self, args: List[str]):
-        # todo create custom exception and remove try/except
-        try:
-            if len(args) == 0:
-                self.state.page_number = 1
-            else:
-                self.state.page_number = int(args[0])
-            rows = self.db.list_rows(self.state.table, self.state.page_number)
-            table_size = self.db.get_table_size(self.state.table)
-            formatted_rows = format_db_rows(self.state.columns,rows,self.state.page_number,table_size)
-            print(formatted_rows)
-        except:
-            print('Enter Table Name!')
-
+        if len(args) == 0:
+            self.state.page_number = 1
+        else:
+            self.state.page_number = int(args[0])
+        rows = self.db.list_rows(self.state.table, self.state.page_number)
+        table_size = self.db.get_table_size(self.state.table)
+        formatted_rows = format_db_rows(self.state.columns,rows,self.state.page_number,table_size)
+        primary_key_column = self.db.get_primary_key(self.state.table)[0]
+        primary_key_type = self.db.get_primary_key(self.state.table)[1]
+        print(f"# Primary key column: {primary_key_column}, Data type: {primary_key_type}")
+        print(formatted_rows)
+        
     def next_handler(self, args: List[str]):
         next_page = self.state.page_number + 1
         table_size = self.db.get_table_size(self.state.table)
@@ -90,7 +89,17 @@ class CommandDispatcher:
             print("Row updated")
         elif self.state.name == CliStateName.INSERT:
             pass # TODO
+        self.table_handler([self.state.table])
 
+    def insert_handler(self, args: List[str]):
+        if self.state.name == CliStateName.TABLE:
+            primary_key_column = self.db.get_primary_key(self.state.table)[0]
+            if args:
+                self.db.insert_row(self.state.table,primary_key_column,args[0])
+            else:
+                primary_key_column = None
+                args = None
+                self.db.insert_row(self.state.table,primary_key_column,args)
         self.table_handler([self.state.table])
 
     def help_handler(self, _: List[str]):
@@ -120,5 +129,10 @@ class CommandDispatcher:
             self.value_handler(prompt)
         else:
             command = Command.from_prompt(prompt)
-            handler = self.handlers[command.command_type.alias]
-            handler(command.arguments)
+            error_code = validate_command(command, self.state)
+
+            if error_code:
+                print_error(error_code)
+            else:
+                handler = self.handlers[command.command_type.alias]
+                handler(command.arguments)
