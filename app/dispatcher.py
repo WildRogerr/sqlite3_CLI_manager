@@ -31,6 +31,8 @@ class CommandDispatcher:
             CommandType.LIST.alias: self.list_handler,
             CommandType.NEXT.alias: self.next_handler,
             CommandType.INSERT.alias: self.insert_handler,
+            CommandType.DELETE.alias: self.delete_handler,
+            CommandType.META.alias: self.meta_handler,
             CommandType.HELP.alias: self.help_handler,
             CommandType.EXIT.alias: self.exit_handler,
         }
@@ -45,6 +47,7 @@ class CommandDispatcher:
             'next': None,
             'update': set(self.state.columns),
             'insert': None,
+            'meta': None,
             'delete': None,
             'help': None,
             'exit': None,
@@ -52,7 +55,7 @@ class CommandDispatcher:
         self.completer.update(completions)
         primary_key_column = self.db.get_primary_key(self.state.table)[0]
         primary_key_type = self.db.get_primary_key(self.state.table)[1]
-        print(f'Table {table_name} choosed.')
+        print(f'Connected to table {table_name}.')
         print(f"Primary key column: {primary_key_column}, Data type: {primary_key_type}")
 
     def update_handler(self, args: List[str]):
@@ -61,6 +64,12 @@ class CommandDispatcher:
         self.state.to_update(column, row_id)
         self.completer.update({})
         print("Input new value:")
+
+    def value_handler(self, value: str):
+        if self.state.name == CliStateName.UPDATE:
+            self.db.update_table(self.state.table, self.state.column, self.state.row_id, value)
+            print("Row updated")
+        self.table_handler([self.state.table])
     
     def list_handler(self, args: List[str]):
         if len(args) == 0:
@@ -70,9 +79,6 @@ class CommandDispatcher:
         rows = self.db.list_rows(self.state.table, self.state.page_number)
         table_size = self.db.get_table_size(self.state.table)
         formatted_rows = format_db_rows(self.state.columns,rows,self.state.page_number,table_size)
-        primary_key_column = self.db.get_primary_key(self.state.table)[0]
-        primary_key_type = self.db.get_primary_key(self.state.table)[1]
-        print(f"# Primary key column: {primary_key_column}, Data type: {primary_key_type}")
         print(formatted_rows)
         
     def next_handler(self, args: List[str]):
@@ -83,24 +89,35 @@ class CommandDispatcher:
         else:
             print('End table.')
 
-    def value_handler(self, value: str):
-        if self.state.name == CliStateName.UPDATE:
-            self.db.update_table(self.state.table, self.state.column, self.state.row_id, value)
-            print("Row updated")
-        elif self.state.name == CliStateName.INSERT:
-            pass # TODO
-        self.table_handler([self.state.table])
-
     def insert_handler(self, args: List[str]):
-        if self.state.name == CliStateName.TABLE:
+        if len(args) > 0:
             primary_key_column = self.db.get_primary_key(self.state.table)[0]
-            if args:
-                self.db.insert_row(self.state.table,primary_key_column,args[0])
+            rowid = self.db.insert_row(self.state.table,primary_key_column, args[0])
+        else:
+            primary_key_column = self.db.get_primary_key(self.state.table)[0]
+            rowid = self.db.insert_row(self.state.table, primary_key_column, None)
+        print(f"Row inserted. Row id: {rowid}")
+
+    def delete_handler(self, args: List[str]):
+        answer = input('Are you sure? yes/no: ')
+        answers = ['yes','now']
+        while answer not in answers:
+            answer = input('Enter yes/no!: ')
+        if answer == 'yes':
+            primary_key_column = self.db.get_primary_key(self.state.table)[0]
+            row_id = self.db.get_row_id(self.state.table, primary_key_column, args[0])
+            if f'{row_id}' in args:
+                self.db.delete_row(self.state.table, primary_key_column, args[0])
+                print(f"Row deleted")
             else:
-                primary_key_column = None
-                args = None
-                self.db.insert_row(self.state.table,primary_key_column,args)
-        self.table_handler([self.state.table])
+                print(f"Enter existed primary key!")
+        elif answer == 'no':
+            print(f"Row not deleted")
+
+    def meta_handler(self, args: List[str]):
+        primary_key_column = self.db.get_primary_key(self.state.table)[0]
+        primary_key_type = self.db.get_primary_key(self.state.table)[1]
+        print(f"# Primary key column: {primary_key_column}, Data type: {primary_key_type}")
 
     def help_handler(self, _: List[str]):
         print('table [tablename]')
@@ -114,6 +131,8 @@ class CommandDispatcher:
         print('insert [optional id]')
         print('    Insert new row to the table. Optionally provide an id for new row.')
         print('    If table contains NOT NULL columns, wizard will ask you to fill each of them one by one.')
+        print('meta')
+        print('    Display table metadata, for example primary key column and its type.')
         print('delete [primary key]')
         print('    Delete the row. Primary key must exist')
         print('help')
@@ -123,7 +142,7 @@ class CommandDispatcher:
 
     def exit_handler(self, _: List[str]):
         sys.exit(0)
-    # todo validate arguments lengths before calling handlers
+    
     def execute(self, prompt: str):
         if self.state.name == CliStateName.UPDATE:
             self.value_handler(prompt)

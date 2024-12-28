@@ -25,6 +25,7 @@ class CommandType(Enum):
     UPDATE = 'update', (2, 2)
     DELETE = 'delete', (1, 1)
     INSERT = 'insert', (0, 1)
+    META = 'meta',(0, 0)
     HELP = 'help', (0, 0)
     EXIT = 'exit', (0, 0)
 

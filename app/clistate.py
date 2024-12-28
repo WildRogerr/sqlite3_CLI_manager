@@ -1,4 +1,3 @@
-
 from enum import Enum
 from typing import List
 
@@ -10,7 +9,6 @@ class CliStateName(Enum):
     DEFAULT = 1
     TABLE = 2
     UPDATE = 3
-    INSERT = 4
 
 class CliState:
     name = CliStateName.DEFAULT

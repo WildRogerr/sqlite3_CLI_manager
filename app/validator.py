@@ -1,6 +1,6 @@
 from typing import Dict, Final, Set
-from clistate import CliState, CliStateName
-from command import Command, CommandType
+from app.clistate import CliState, CliStateName
+from app.command import Command, CommandType
 
 
 VALID_COMMANDS: Final[Dict[CliStateName, Set[CommandType]]] = {
@@ -20,7 +20,6 @@ VALID_COMMANDS: Final[Dict[CliStateName, Set[CommandType]]] = {
         CommandType.NEXT,
     },
     CliStateName.UPDATE: set(),
-    CliStateName.INSERT: set(),
 }
 
 
