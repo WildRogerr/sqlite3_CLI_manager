@@ -2,7 +2,9 @@ import sqlite3
 from sqlite3 import Connection
 from typing import Final, List, Tuple, Union
 
+
 PAGE_SIZE: Final[int] = 2
+
 
 class DB:
     connection: Connection

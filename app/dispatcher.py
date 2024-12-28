@@ -1,12 +1,11 @@
 import sys
 from typing import List, Callable, Dict
-
-from clistate import CliState, CliStateName
-from command import Command, CommandType
-from completer import DynamicCompleter
-from db import DB, PAGE_SIZE
-from format import format_db_rows
-from validator import print_error, validate_command
+from app.clistate import CliState, CliStateName
+from app.command import Command, CommandType
+from app.completer import DynamicCompleter
+from app.db import DB, PAGE_SIZE
+from app.format import format_db_rows
+from app.validator import print_error, validate_command
 
 
 class CommandDispatcher:
@@ -100,7 +99,7 @@ class CommandDispatcher:
 
     def delete_handler(self, args: List[str]):
         answer = input('Are you sure? yes/no: ')
-        answers = ['yes','now']
+        answers = ['yes','no']
         while answer not in answers:
             answer = input('Enter yes/no!: ')
         if answer == 'yes':
@@ -112,7 +111,7 @@ class CommandDispatcher:
             else:
                 print(f"Enter existed primary key!")
         elif answer == 'no':
-            print(f"Row not deleted")
+            print(f"Row is not deleted")
 
     def meta_handler(self, args: List[str]):
         primary_key_column = self.db.get_primary_key(self.state.table)[0]
