@@ -1,10 +1,7 @@
 import sqlite3
 import sys
-from sqlite3 import Connection
 from prompt_toolkit import PromptSession
-from app.clistate import CliState, CliStateName
-from app.command import Command, CommandType, InvalidCommand, InvalidArguments
-from app.completer import DynamicCompleter
+from app.command import InvalidCommand, InvalidArguments
 from app.dispatcher import CommandDispatcher
 
 #Program structure:
@@ -28,9 +25,12 @@ def main(database: str):
             continue  # Control-C pressed. Try again.
         except EOFError:
             break  # Control-D pressed.
-        except (InvalidCommand, InvalidArguments, sqlite3.Error) as error:
+        except (InvalidCommand, InvalidArguments) as error:#, sqlite3.Error
             print(error)
 
 if __name__ == '__main__':
-    db = sys.argv[1]
-    main(db)
+    try:
+        db = sys.argv[1]
+        main(db)
+    except IndexError:
+        print('Enter "database_path"!')

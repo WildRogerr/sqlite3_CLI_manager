@@ -91,11 +91,18 @@ class CommandDispatcher:
     def insert_handler(self, args: List[str]):
         if len(args) > 0:
             primary_key_column = self.db.get_primary_key(self.state.table)[0]
-            rowid = self.db.insert_row(self.state.table,primary_key_column, args[0])
+            row_id_db = self.db.get_row_id(self.state.table, primary_key_column, args[0])
+            print(row_id_db)
+            print(args)
+            if f'{row_id_db}' in args:
+                print(f"Row {row_id_db} already exists, enter another primary key!")
+            else:
+                rowid = self.db.insert_row(self.state.table,primary_key_column, args[0])
+                print(f'Row inserted. Row id: {rowid}')
         else:
             primary_key_column = self.db.get_primary_key(self.state.table)[0]
             rowid = self.db.insert_row(self.state.table, primary_key_column, None)
-        print(f"Row inserted. Row id: {rowid}")
+            print(f'Row inserted. Row id: {rowid}')
 
     def delete_handler(self, args: List[str]):
         answer = input('Are you sure? yes/no: ')
