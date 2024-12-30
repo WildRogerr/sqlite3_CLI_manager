@@ -1,4 +1,4 @@
 *.db
 .idea/
 __pycache__/
-.vscode/
+.vscode/launch.json
