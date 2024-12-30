@@ -68,9 +68,9 @@ class DB:
         cur = self.connection.cursor()
         not_null_columns = self.get_not_null_columns_without_default(table_name)
         if primary_key and primary_key_column:
-            if len(not_null_columns) == 1:
+            if len(not_null_columns) == 1 and primary_key_column in not_null_columns:
                 cur.execute(f'INSERT INTO {table_name} ({primary_key_column}) VALUES ({primary_key})')
-            else:
+            elif len(not_null_columns) > 1:
                 placeholders = ", ".join(["?" for _ in not_null_columns])
                 not_null_columns.remove(primary_key_column)
                 columns = ", ".join(not_null_columns)
@@ -79,17 +79,20 @@ class DB:
                 values.extend(["0" for _ in not_null_columns])
                 query = f"INSERT INTO {table_name} ({primary_key_column}, {columns}) VALUES ({placeholders})"
                 cur.execute(query, values)
-
+            else:
+                cur.execute(f'INSERT INTO {table_name} ({primary_key_column}) VALUES ({primary_key})')
         else:
             if len(not_null_columns) == 1 and primary_key_column in not_null_columns:
                 cur.execute(f'INSERT INTO {table_name} DEFAULT VALUES')
-            else:
+            elif len(not_null_columns) > 1:
                 not_null_columns.remove(primary_key_column)
                 placeholders = ", ".join(["?" for _ in not_null_columns])
                 columns = ", ".join(not_null_columns)
                 values = ["0" for _ in not_null_columns]
                 query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
                 cur.execute(query, values)
+            else:
+                cur.execute(f'INSERT INTO {table_name} DEFAULT VALUES')
         rowid = cur.lastrowid
         self.connection.commit()
         return rowid

@@ -25,7 +25,7 @@ def main(database: str):
             continue  # Control-C pressed. Try again.
         except EOFError:
             break  # Control-D pressed.
-        except (InvalidCommand, InvalidArguments) as error:#, sqlite3.Error
+        except (InvalidCommand, InvalidArguments, sqlite3.Error) as error:
             print(error)
 
 if __name__ == '__main__':

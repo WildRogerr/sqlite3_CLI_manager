@@ -92,8 +92,6 @@ class CommandDispatcher:
         if len(args) > 0:
             primary_key_column = self.db.get_primary_key(self.state.table)[0]
             row_id_db = self.db.get_row_id(self.state.table, primary_key_column, args[0])
-            print(row_id_db)
-            print(args)
             if f'{row_id_db}' in args:
                 print(f"Row {row_id_db} already exists, enter another primary key!")
             else:
