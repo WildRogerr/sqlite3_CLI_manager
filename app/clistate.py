@@ -34,5 +34,3 @@ class CliState:
         self.name = CliStateName.UPDATE
         self.column = column
         self.row_id = row_id
-
-    # TODO: Add to_insert method

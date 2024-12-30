@@ -17,4 +17,3 @@ def format_db_rows(columns: List[str], rows: List[tuple], page_number:int,table_
     list_rows.append(f'# End page.')
     
     return "\n".join(list_rows)
-        
