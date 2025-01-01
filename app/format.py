@@ -1,3 +1,4 @@
+import math
 from typing import List
 from app.db import PAGE_SIZE
 
@@ -5,7 +6,11 @@ from app.db import PAGE_SIZE
 def format_db_rows(columns: List[str], rows: List[tuple], page_number:int,table_size:int) -> str:
     number = (page_number - 1) * PAGE_SIZE
     list_rows = []
-    end_page = int(table_size/PAGE_SIZE)
+    end_page = math.ceil(table_size/PAGE_SIZE)
+    if page_number > end_page:
+        list_rows.append(f'Enter existed page!')
+        return "\n".join(list_rows)
+    
     list_rows.append(f'# Page number: {page_number}/{end_page}')
     
     for row in rows:
